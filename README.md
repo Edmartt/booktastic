@@ -24,3 +24,5 @@ The tech stack I'll be using:
 2. #### General flow
 
 ![](https://github.com/Edmartt/booktastic/blob/main/assets/sequence%20flow.jpg)
+
+**P.S.** The red line dividing serves to indicate that there are two cases: when the user is valid and when the user is invalid.
