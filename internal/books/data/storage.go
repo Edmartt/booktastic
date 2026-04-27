@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/edmartt/bookstatic-book-service/internal/books/models"
 	"github.com/edmartt/bookstatic-book-service/internal/database"
@@ -35,9 +36,14 @@ func (b BookDataAccess) Create(book models.Books) (string, error) {
 func (b BookDataAccess) Read(id string) (*models.Books, error) {
 	conn := b.db.GetConnection()
 
-	err := conn.Get(&b.book, "SELECT uuid, isbn, title, pages, current_page, author, year, status FROM books WHERE uuid = ?", id)
+	query := "SELECT uuid, isbn, title, pages, current_page, author, year, status FROM books WHERE uuid = ?"
+
+	query = conn.Rebind(query)
+
+	err := conn.Get(&b.book, query, id)
 
 	if err != nil {
+		log.Println("error data: ", err.Error())
 		return nil, err
 	}
 	return &b.book, nil
