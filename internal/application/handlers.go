@@ -64,7 +64,3 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 	context.JSON(http.StatusCreated, dbResponse)
 
 }
-
-func (h HTTPHandler) updateBook(context *gin.Context) {
-
-}
