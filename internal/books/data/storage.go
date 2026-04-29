@@ -1,7 +1,7 @@
 package data
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 
 	"github.com/edmartt/bookstatic-book-service/internal/books/models"
@@ -9,8 +9,7 @@ import (
 )
 
 type BookDataAccess struct {
-	db   database.IDBConnection
-	book models.Books
+	db database.IDBConnection
 }
 
 func NewRepository(db database.IDBConnection) *BookDataAccess {
@@ -19,7 +18,7 @@ func NewRepository(db database.IDBConnection) *BookDataAccess {
 	}
 }
 
-func (b BookDataAccess) Create(book models.Books) (string, error) {
+func (b *BookDataAccess) Create(book models.Books) (string, error) {
 	conn := b.db.GetConnection()
 
 	_, err := conn.NamedExec("INSERT INTO books (uuid, isbn, title, pages, current_page, author, year, status) VALUES(:uuid, :isbn, :title, :pages, :current_page, :author, :year, :status)", &book)
@@ -28,48 +27,45 @@ func (b BookDataAccess) Create(book models.Books) (string, error) {
 		return "", err
 	}
 
-	bookData := fmt.Sprintf("%s %s %s", book.UUID, book.ISBN, book.Title)
-
-	return bookData, nil
+	return book.UUID, nil
 }
 
-func (b BookDataAccess) Read(id string) (*models.Books, error) {
+func (b *BookDataAccess) Read(id string) (*models.Books, error) {
 	conn := b.db.GetConnection()
 
 	query := "SELECT uuid, isbn, title, pages, current_page, author, year, status FROM books WHERE uuid = ?"
 
 	query = conn.Rebind(query)
 
-	err := conn.Get(&b.book, query, id)
+	var book models.Books
+
+	err := conn.Get(&book, query, id)
 
 	if err != nil {
 		log.Println("error data: ", err.Error())
 		return nil, err
 	}
-	return &b.book, nil
+	return &book, nil
 }
 
-func (b BookDataAccess) Update(id string) (string, error) {
+func (b *BookDataAccess) Update(book *models.Books) (*models.Books, error) {
 	conn := b.db.GetConnection()
-	book, err := b.Read(id)
+
+	result, err := conn.NamedExec("UPDATE books SET isbn = :isbn, title = :title, pages = :pages, current_page = :current_page, author = :author, year = :year, status = :status WHERE uuid = :uuid", book)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	result, err := conn.NamedExec("UPDATE books SET isbn = :isbn, title = :title, pages = :pages, current_page = :current_page, author = :author, year = :year, status = :status WHERE id=?", book)
+	rows, err := result.RowsAffected()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	lastID, err := result.LastInsertId()
-
-	if err != nil {
-		return "", err
+	if rows == 0 {
+		return nil, sql.ErrNoRows
 	}
 
-	bookData := fmt.Sprintf("%d %s %s", lastID, book.ISBN, book.Title)
-
-	return bookData, nil
+	return book, nil
 }
