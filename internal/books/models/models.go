@@ -11,11 +11,11 @@ const (
 // Books model
 type Books struct {
 	UUID        string `db:"uuid"`
-	ISBN        string `json:"isbn" db:"isbn"`
-	Title       string `json:"title" db:"title"`
-	Pages       string `json:"pages" db:"pages"`
-	CurrentPage string `json:"current_page" db:"current_page"`
-	Author      string `json:"author" db:"author"`
-	Year        string `json:"year" db:"year"`
-	Status      string `json:"status" db:"status"`
+	ISBN        string `db:"isbn"`
+	Title       string `db:"title"`
+	Pages       string `db:"pages"`
+	CurrentPage string `db:"current_page"`
+	Author      string `db:"author"`
+	Year        string `db:"year"`
+	Status      string `db:"status"`
 }
