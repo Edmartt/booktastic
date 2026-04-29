@@ -1,10 +1,10 @@
 package application
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/edmartt/bookstatic-book-service/internal/books/data"
+	"github.com/edmartt/bookstatic-book-service/internal/books/dtos"
 	"github.com/edmartt/bookstatic-book-service/internal/books/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -56,11 +56,47 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 	dbResponse, err := h.bookRepository.Create(book)
 
 	if err != nil {
-		log.Println(err.Error())
 		context.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	context.JSON(http.StatusCreated, dbResponse)
 
+}
+
+func (h HTTPHandler) UpdateBook(context *gin.Context) {
+
+	id := context.Param("id")
+
+	if id == "" {
+		jsonResponse := "bad request"
+		context.JSON(http.StatusBadRequest, jsonResponse)
+		return
+	}
+
+	dbResponse, err := h.bookRepository.Read(id)
+
+	if err != nil {
+		context.JSON(http.StatusNotFound, "not found")
+		return
+	}
+
+	var dtoUpdate dtos.UpdateBookDTO
+	err = context.ShouldBindJSON(&dtoUpdate)
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, "invalid body")
+		return
+	}
+
+	dtoUpdate.ApplyTo(dbResponse)
+
+	updateResult, err := h.bookRepository.Update(dbResponse)
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, "bad request")
+		return
+	}
+
+	context.JSON(http.StatusOK, updateResult)
 }
