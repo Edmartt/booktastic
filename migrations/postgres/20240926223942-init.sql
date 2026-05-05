@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS books(
 	id SERIAL PRIMARY KEY,
-	uuid character varying(30),
+	uuid character varying(36),
 	isbn character varying(30),
 	title TEXT,
 	pages character varying(30),

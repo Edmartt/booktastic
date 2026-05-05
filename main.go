@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("ERROR ENV LOAD: %v", err)
 	}
 
-	dbConnectObject := database.Postgres{}
+	dbConnectObject := database.SQLite{}
 	getConn := dbConnectObject.GetConnection()
 
 	database.PingDB(getConn)

@@ -13,10 +13,13 @@ type HTTPServer struct {
 func (h HTTPServer) setBookRoutes(router *gin.RouterGroup) {
 	router.GET("/books/:id", h.Handler.ReadBook)
 	router.POST("/books", h.Handler.CreateBook)
+	router.PATCH("/books/:id", h.Handler.UpdateBook)
 }
 
 func (h HTTPServer) setRouter() *gin.Engine {
 	router := gin.Default()
+
+	router.Use(LimitRequest())
 	apiGroup := router.Group("/api/v1")
 	h.setBookRoutes(apiGroup)
 
