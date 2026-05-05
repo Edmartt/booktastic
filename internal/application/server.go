@@ -18,6 +18,8 @@ func (h HTTPServer) setBookRoutes(router *gin.RouterGroup) {
 
 func (h HTTPServer) setRouter() *gin.Engine {
 	router := gin.Default()
+
+	router.Use(LimitRequest())
 	apiGroup := router.Group("/api/v1")
 	h.setBookRoutes(apiGroup)
 
