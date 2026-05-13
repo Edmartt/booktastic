@@ -1,0 +1,34 @@
+services:
+  traefik:
+    image: traefik:v3.7
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik-net
+
+  books:
+    build: .
+    env_file:
+      - ".env"
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.books.rule=Host(`books.localhost`)"
+      - "traefik.http.services.books.loadbalancer.server.port=8080"
+
+      - "traefik.http.middlewares.books-rate-limit.ratelimit.average=5"
+      - "traefik.http.middlewares.books-rate-limit.ratelimit.burst=10"
+      - "traefik.http.routers.books.middlewares=books-rate-limit"
+
+networks:
+  traefik-net:
+    driver: bridge
