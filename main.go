@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/edmartt/bookstatic-book-service/internal/application"
@@ -11,8 +10,9 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("ERROR ENV LOAD: %v", err)
+
+	if _, err := os.Stat(".env"); err == nil {
+		_ = godotenv.Load(".env")
 	}
 
 	dbConnectObject := database.SQLite{}
