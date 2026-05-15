@@ -15,7 +15,7 @@ func main() {
 		_ = godotenv.Load(".env")
 	}
 
-	dbConnectObject := database.Postgres{}
+	dbConnectObject := &database.Postgres{}
 	getConn := dbConnectObject.GetConnection()
 
 	database.PingDB(getConn)
