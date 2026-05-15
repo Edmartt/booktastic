@@ -15,10 +15,16 @@ type Postgres struct {
 	password string
 	host     string
 	port     string
+	conn     *sqlx.DB
 }
 
 // GetConnection connects to specific database
 func (p Postgres) GetConnection() *sqlx.DB {
+
+	if p.conn != nil {
+		return p.conn
+	}
+
 	p.user = os.Getenv("PG_USER")
 	p.db = os.Getenv("PG_DB")
 	p.password = os.Getenv("PG_PASSWORD")
@@ -31,5 +37,10 @@ func (p Postgres) GetConnection() *sqlx.DB {
 		log.Fatal("CONNECTION ERROR: ", err)
 	}
 
-	return db
+	db.SetMaxOpenConns(5)
+	db.SetMaxIdleConns(25)
+
+	p.conn = db
+
+	return p.conn
 }
