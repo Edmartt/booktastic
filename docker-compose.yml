@@ -22,7 +22,8 @@ services:
       POSTGRES_USER: "${PG_USER}"
       POSTGRES_PASSWORD: "${PG_PASSWORD}"
       POSTGRES_DB: "${PG_DB}"
-
+    volumes:
+      - pg-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
       interval: 30s
@@ -57,8 +58,6 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-    volumes:
-      - pg-data:/var/lib/postgresql/data/books/
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.books.rule=Host(`books.localhost`)"
