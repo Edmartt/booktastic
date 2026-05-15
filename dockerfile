@@ -9,8 +9,11 @@ ENV CGO_ENABLED=1
 ENV GOOS=linux
 ENV GOARCH=amd64
 
-COPY . .
+COPY go.mod go.sum ./
+RUN go mod download
 
+COPY . .
+RUN go install github.com/rubenv/sql-migrate/...@latest
 RUN go build -o booktastic_book_service .
 
 FROM alpine:3.23
@@ -20,6 +23,9 @@ RUN apk add --no-cache ca-certificates
 WORKDIR /book_service
 
 COPY --from=builder /book_service/booktastic_book_service .
+COPY --from=builder /go/bin/sql-migrate /usr/local/bin/sql-migrate
+COPY --from=builder /book_service/dbconfig.yml .
+COPY --from=builder /book_service/migrations ./migrations
 
 RUN chmod +x booktastic_book_service
 
