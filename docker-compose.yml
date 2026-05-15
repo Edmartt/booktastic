@@ -65,7 +65,7 @@ services:
 
       - "traefik.http.middlewares.books-rate-limit.ratelimit.average=5"
       - "traefik.http.middlewares.books-rate-limit.ratelimit.burst=10"
-      - "traefik.http.routers.books.middlewares=books-rate-limit"
+      - "traefik.http.routers.books.middlewares=books-rate-limit@docker"
 
 networks:
   traefik-net:
