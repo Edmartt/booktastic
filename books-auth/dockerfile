@@ -1,0 +1,30 @@
+FROM golang:1.25.10-alpine3.23 AS builder 
+
+RUN apk add --no-cache build-base
+
+WORKDIR /books_auth
+
+ENV GO111MODULE=on
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o booktastic_auth .
+
+FROM alpine:3.23
+
+RUN apk add --no-cache ca-certificates
+
+WORKDIR /books_auth
+
+COPY --from=builder /books_auth/booktastic_auth .
+
+RUN chmod +x booktastic_auth
+
+EXPOSE 8080
+
+CMD ["./booktastic_auth"]
