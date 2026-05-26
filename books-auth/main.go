@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	validator, err := auth0.JWTvalidator(auth0Config.Domain, auth0Config.Audience)
+	validator, err := auth0.NewAuth0TokenValidator(auth0Config.Domain, auth0Config.Audience)
 
 	if err != nil {
 		panic(err)
