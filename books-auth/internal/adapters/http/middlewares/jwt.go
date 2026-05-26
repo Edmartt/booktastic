@@ -4,11 +4,11 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/auth0/go-jwt-middleware/v3/validator"
+	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtValidator *validator.Validator) gin.HandlerFunc {
+func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 
@@ -26,7 +26,8 @@ func AuthMiddleware(jwtValidator *validator.Validator) gin.HandlerFunc {
 
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, bearer))
 
-		claims, err := jwtValidator.ValidateToken(c.Request.Context(), token)
+		claims, err := tokenValidator.Validate(c.Request.Context(), token)
+
 		if err != nil {
 			slog.Error(
 				"JWT validation failed",

@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/auth0/go-jwt-middleware/v3/validator"
+	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 
 type HTTPHandler struct {
-	jwtValidator *validator.Validator
+	jwtValidator ports.TokenValidator
 }
 
-func NewHandler(jwtValidator *validator.Validator) *HTTPHandler {
+func NewHandler(jwtValidator ports.TokenValidator) *HTTPHandler {
 	return &HTTPHandler{
 		jwtValidator: jwtValidator,
 	}
@@ -36,7 +36,7 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 	token := strings.TrimSpace(strings.TrimPrefix(authHeader, bearer))
 
-	_, err := h.jwtValidator.ValidateToken(context.Request.Context(), token)
+	_, err := h.jwtValidator.Validate(context.Request.Context(), token)
 
 	if err != nil {
 		slog.Error("JWT validation failed", "error", err, "path", context.FullPath())
