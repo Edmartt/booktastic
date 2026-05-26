@@ -29,7 +29,7 @@ func NewAuth0TokenValidator(domain, audience string) (*Auth0TokenValidator, erro
 		validator.WithAudience(audience),
 		validator.WithCustomClaims(func() validator.CustomClaims {
 
-			return &projectDomain.CustomClaims{}
+			return &CustomClaims{}
 		}),
 		validator.WithAllowedClockSkew(30*time.Second),
 	)
