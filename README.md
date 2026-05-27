@@ -3,4 +3,4 @@ This repository holds the system design documentation: architecture diagrams, se
 The following diagram shows the overall system architecture:
 
 
-![](https://github.com/Edmartt/booktastic-archive/blob/main/assets/system%20architecture-2026.jpg)
+![](https://github.com/Edmartt/booktastic/blob/dev/system%20architecture-2026.jpg)
