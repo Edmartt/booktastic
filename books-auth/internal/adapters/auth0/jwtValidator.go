@@ -7,7 +7,6 @@ import (
 
 	"github.com/auth0/go-jwt-middleware/v3/jwks"
 	"github.com/auth0/go-jwt-middleware/v3/validator"
-	projectDomain "github.com/edmartt/booktastic-auth-service/internal/core/domain"
 )
 
 type Auth0TokenValidator struct {
