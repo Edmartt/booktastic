@@ -5,17 +5,20 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/edmartt/booktastic-auth-service/internal/adapters/http/dto"
 	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 
 type HTTPHandler struct {
 	jwtValidator ports.TokenValidator
+	authProvider ports.AuthProvider
 }
 
-func NewHandler(jwtValidator ports.TokenValidator) *HTTPHandler {
+func NewHandler(jwtValidator ports.TokenValidator, authProvider ports.AuthProvider) *HTTPHandler {
 	return &HTTPHandler{
 		jwtValidator: jwtValidator,
+		authProvider: authProvider,
 	}
 }
 
@@ -43,6 +46,37 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 		unauthorized(context, "Failed to validate JWT")
 		return
 	}
+}
+
+func (h HTTPHandler) SignupUserHandler(c *gin.Context) {
+	var myDTO dto.SignUpDTO
+
+	if err := c.BindJSON(&myDTO); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "error binding body"})
+		return
+	}
+
+	if myDTO.PasswordConfirmation != myDTO.Password {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "password confirmation error"})
+		return
+	}
+
+	if !myDTO.IsValidPassword() {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "password must contain uppercase, lowercase, numbers and special characters"})
+		return
+	}
+
+	authProviderResponse, err := h.authProvider.SignUp(myDTO.Email, myDTO.Password)
+
+	slog.Error("unkown error", "error", err, "path", c.FullPath())
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "user already exists"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"user created ID": *authProviderResponse})
 }
 
 func unauthorized(c *gin.Context, message string) {
