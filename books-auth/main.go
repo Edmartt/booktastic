@@ -26,7 +26,7 @@ func main() {
 		panic(err)
 	}
 
-	authProvider, err := auth0.NewAuth0InitAPI(auth0Config.Domain, auth0Config.ClientID, auth0Config.ClientSecret, auth0Config.Auth0Connection)
+	authProvider, err := auth0.NewAuth0InitAPI(auth0Config.Domain, auth0Config.ClientID, auth0Config.ClientSecret, auth0Config.Auth0Connection, auth0Config.Audience)
 
 	if err != nil {
 		panic(err)

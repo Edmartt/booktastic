@@ -13,6 +13,7 @@ type HTTPServer struct {
 func (h HTTPServer) setAuthRoutes(router *gin.RouterGroup) {
 	router.GET("/auth/verify", h.Handler.VerifyJWTToken)
 	router.POST("/auth/signup", h.Handler.SignupUserHandler)
+	router.POST("/auth/login", h.Handler.LoginUserHandler)
 }
 
 func (h HTTPServer) setRouter() *gin.Engine {

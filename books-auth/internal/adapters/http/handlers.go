@@ -48,39 +48,59 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 	}
 }
 
-func (h HTTPHandler) SignupUserHandler(c *gin.Context) {
+func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	var myDTO dto.SignUpDTO
 
-	if err := c.BindJSON(&myDTO); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "error binding body"})
+	if err := context.BindJSON(&myDTO); err != nil {
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "error binding body"})
 		return
 	}
 
 	if myDTO.PasswordConfirmation != myDTO.Password {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "password confirmation error"})
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "password confirmation error"})
 		return
 	}
 
 	if !myDTO.IsValidPassword() {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "password must contain uppercase, lowercase, numbers and special characters"})
 		return
 	}
 
 	authProviderResponse, err := h.authProvider.SignUp(myDTO.Email, myDTO.Password)
 
-	slog.Error("unkown error", "error", err, "path", c.FullPath())
+	slog.Error("unkown error", "error", err, "path", context.FullPath())
 
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "user already exists"})
+		context.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "user already exists"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"user created ID": *authProviderResponse})
+	context.JSON(http.StatusCreated, gin.H{"user created ID": *authProviderResponse})
 }
 
-func unauthorized(c *gin.Context, message string) {
-	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+func unauthorized(context *gin.Context, message string) {
+	context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 		"message": message,
 	})
+}
+
+func (h *HTTPHandler) LoginUserHandler(context *gin.Context) {
+
+	var loginDTO dto.LoginDTO
+
+	if err := context.BindJSON(&loginDTO); err != nil {
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err})
+		return
+	}
+
+	auth0Token, err := h.authProvider.Login(loginDTO.Email, loginDTO.Password)
+
+	if err != nil {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "invalid credentials"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"access token ": auth0Token})
+
 }

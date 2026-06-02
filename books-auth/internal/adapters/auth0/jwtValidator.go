@@ -14,7 +14,7 @@ type Auth0TokenValidator struct {
 }
 
 func NewAuth0TokenValidator(domain, audience string) (*Auth0TokenValidator, error) {
-	issuerURL, _ := url.Parse(domain)
+	issuerURL, _ := url.Parse(domain + "/")
 	provider, _ := jwks.NewCachingProvider(
 		jwks.WithIssuerURL(issuerURL),
 		jwks.WithCacheTTL(5*time.Minute),
