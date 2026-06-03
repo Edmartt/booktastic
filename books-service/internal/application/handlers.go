@@ -22,13 +22,14 @@ func NewHandler(bookRepo data.IDataAccessLayer) *HTTPHandler {
 
 func (h HTTPHandler) ReadBook(context *gin.Context) {
 	id := context.Param("id")
+	userID := context.GetHeader("X-User-Id")
 
 	if id == "" {
 		context.JSON(http.StatusBadRequest, "bad request")
 		return
 	}
 
-	book, err := h.bookRepository.Read(id)
+	book, err := h.bookRepository.Read(id, userID)
 
 	if err != nil {
 		context.JSON(http.StatusNotFound, "not found")
@@ -58,6 +59,13 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 		return
 	}
 
+	userID := context.GetHeader("X-User-Id")
+
+	if userID == "" {
+		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "internal server error"})
+		return
+	}
+
 	book := models.Books{
 		UUID:        uuid.NewString(),
 		ISBN:        *createDTO.ISBN,
@@ -67,6 +75,7 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 		Author:      *createDTO.Author,
 		Year:        *createDTO.Year,
 		Status:      *createDTO.Status,
+		UserID:      userID,
 	}
 
 	dbResponse, err := h.bookRepository.Create(book)
@@ -83,6 +92,7 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 func (h HTTPHandler) UpdateBook(context *gin.Context) {
 
 	id := context.Param("id")
+	userID := context.GetHeader("X-User-Id")
 
 	if id == "" {
 		jsonResponse := "bad request"
@@ -90,7 +100,7 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 		return
 	}
 
-	dbResponse, err := h.bookRepository.Read(id)
+	dbResponse, err := h.bookRepository.Read(id, userID)
 
 	if err != nil {
 		context.JSON(http.StatusNotFound, "not found")

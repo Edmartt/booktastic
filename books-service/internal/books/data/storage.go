@@ -21,7 +21,7 @@ func NewRepository(db database.IDBConnection) *BookDataAccess {
 func (b *BookDataAccess) Create(book models.Books) (string, error) {
 	conn := b.db.GetConnection()
 
-	_, err := conn.NamedExec("INSERT INTO books (uuid, isbn, title, pages, current_page, author, year, status) VALUES(:uuid, :isbn, :title, :pages, :current_page, :author, :year, :status)", &book)
+	_, err := conn.NamedExec("INSERT INTO books (uuid, isbn, title, pages, current_page, author, year, status, user_id) VALUES(:uuid, :isbn, :title, :pages, :current_page, :author, :year, :status, :user_id)", &book)
 
 	if err != nil {
 		return "", err
@@ -30,16 +30,16 @@ func (b *BookDataAccess) Create(book models.Books) (string, error) {
 	return book.UUID, nil
 }
 
-func (b *BookDataAccess) Read(id string) (*models.Books, error) {
+func (b *BookDataAccess) Read(id, user_id string) (*models.Books, error) {
 	conn := b.db.GetConnection()
 
-	query := "SELECT uuid, isbn, title, pages, current_page, author, year, status FROM books WHERE uuid = ?"
+	query := "SELECT uuid, isbn, title, pages, current_page, author, year, status FROM books WHERE uuid = ? AND user_id = ?"
 
 	query = conn.Rebind(query)
 
 	var book models.Books
 
-	err := conn.Get(&book, query, id)
+	err := conn.Get(&book, query, id, user_id)
 
 	if err != nil {
 		log.Println("error data: ", err.Error())

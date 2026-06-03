@@ -18,4 +18,5 @@ type Books struct {
 	Author      string `db:"author"`
 	Year        string `db:"year"`
 	Status      string `db:"status"`
+	UserID      string `db:"user_id"`
 }
