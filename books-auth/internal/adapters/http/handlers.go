@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/auth0/go-jwt-middleware/v3/validator"
 	"github.com/edmartt/booktastic-auth-service/internal/adapters/http/dto"
 	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
@@ -39,13 +40,18 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 	token := strings.TrimSpace(strings.TrimPrefix(authHeader, bearer))
 
-	_, err := h.jwtValidator.Validate(context.Request.Context(), token)
+	claims, err := h.jwtValidator.Validate(context.Request.Context(), token)
 
 	if err != nil {
 		slog.Error("JWT validation failed", "error", err, "path", context.FullPath())
 		unauthorized(context, "Failed to validate JWT")
 		return
 	}
+
+	validatedClaims := claims.(*validator.ValidatedClaims)
+
+	context.Header("X-User-Id", validatedClaims.RegisteredClaims.Subject)
+	context.Status(http.StatusOK)
 }
 
 func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
