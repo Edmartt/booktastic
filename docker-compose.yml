@@ -35,8 +35,8 @@ services:
 
   migrate:
     build:
-      context: ./books-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./books-service/dockerfile
     command: ["sh", "-c", "sql-migrate up -config=dbconfig.yml -env=production"]
     env_file:
       - ".env"
@@ -51,8 +51,8 @@ services:
 
   books:
     build: 
-      context: ./books-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./books-service/dockerfile
     env_file:
       - ".env"
     networks:
@@ -72,8 +72,8 @@ services:
 
   auth-service:
     build:
-      context: ./books-auth
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./books-auth/dockerfile
     env_file:
       - ".env"
     networks:

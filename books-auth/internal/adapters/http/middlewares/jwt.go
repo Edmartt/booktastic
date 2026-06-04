@@ -2,25 +2,28 @@ package middlewares
 
 import (
 	"log/slog"
+	"net/http"
 	"strings"
 
 	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
+	selfErrors "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
+		writer := selfErrors.NewGinErrors(c)
 
 		if authHeader == "" {
-			unauthorized(c, "Missing authorization header")
+			writer.WriteError(http.StatusUnauthorized, "missing authorization header")
 			return
 		}
 
 		const bearer = "Bearer "
 
 		if !strings.HasPrefix(authHeader, bearer) {
-			unauthorized(c, "Invalid authorization header")
+			writer.WriteError(http.StatusUnauthorized, "Invalid authorization header")
 			return
 		}
 
@@ -35,7 +38,7 @@ func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 				"path", c.FullPath(),
 			)
 
-			unauthorized(c, "Failed to validate JWT")
+			writer.WriteError(http.StatusUnauthorized, "failed to validate JWT")
 			return
 		}
 
@@ -43,13 +46,4 @@ func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func unauthorized(c *gin.Context, message string) {
-	c.AbortWithStatusJSON(
-		401,
-		gin.H{
-			"message": message,
-		},
-	)
 }
