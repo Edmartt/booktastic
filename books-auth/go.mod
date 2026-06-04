@@ -1,6 +1,6 @@
 module github.com/edmartt/booktastic-auth-service
 
-go 1.25.0
+go 1.25.10
 
 require (
 	github.com/auth0/go-auth0/v2 v2.12.0
@@ -8,6 +8,10 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/joho/godotenv v1.5.1
 )
+
+require github.com/edmartt/booktastic-shared v0.0.0
+
+replace github.com/edmartt/booktastic-shared => ../shared
 
 require (
 	github.com/PuerkitoBio/rehttp v1.4.0 // indirect
