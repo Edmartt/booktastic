@@ -9,6 +9,8 @@ import (
 	"github.com/edmartt/booktastic-auth-service/internal/adapters/http/dto"
 	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
+
+	selfErrors "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 )
 
 type HTTPHandler struct {
@@ -25,16 +27,17 @@ func NewHandler(jwtValidator ports.TokenValidator, authProvider ports.AuthProvid
 
 func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 	authHeader := context.GetHeader("Authorization")
+	writer := selfErrors.NewGinErrors(context)
 
 	if authHeader == "" {
-		unauthorized(context, "Missing Authorization Header")
+		writer.WriteError(401, "Missing Authorization Header")
 		return
 	}
 
 	const bearer = "Bearer"
 
 	if !strings.HasPrefix(authHeader, bearer) {
-		unauthorized(context, "Invalid authorization header")
+		writer.WriteError(401, "Invalid authorization header")
 		return
 	}
 
@@ -44,7 +47,7 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 	if err != nil {
 		slog.Error("JWT validation failed", "error", err, "path", context.FullPath())
-		unauthorized(context, "Failed to validate JWT")
+		writer.WriteError(401, "failed to validate JWT")
 		return
 	}
 
@@ -56,20 +59,20 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	var myDTO dto.SignUpDTO
+	writer := selfErrors.NewGinErrors(context)
 
 	if err := context.BindJSON(&myDTO); err != nil {
-		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "error binding body"})
+		writer.WriteError(http.StatusBadRequest, "error binding body")
 		return
 	}
 
 	if myDTO.PasswordConfirmation != myDTO.Password {
-		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "password confirmation error"})
+		writer.WriteError(http.StatusBadRequest, "password confirmation error")
 		return
 	}
 
 	if !myDTO.IsValidPassword() {
-		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": "password must contain uppercase, lowercase, numbers and special characters"})
+		writer.WriteError(http.StatusBadRequest, "password must contain uppercase, lowercase, numbers and special characters")
 		return
 	}
 
@@ -78,32 +81,27 @@ func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	slog.Error("unkown error", "error", err, "path", context.FullPath())
 
 	if err != nil {
-		context.AbortWithStatusJSON(http.StatusConflict, gin.H{"message": "user already exists"})
+		writer.WriteError(http.StatusConflict, "user already exists")
 		return
 	}
 
 	context.JSON(http.StatusCreated, gin.H{"user created ID": *authProviderResponse})
 }
 
-func unauthorized(context *gin.Context, message string) {
-	context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-		"message": message,
-	})
-}
-
 func (h *HTTPHandler) LoginUserHandler(context *gin.Context) {
 
 	var loginDTO dto.LoginDTO
+	writer := selfErrors.NewGinErrors(context)
 
 	if err := context.BindJSON(&loginDTO); err != nil {
-		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err})
+		writer.WriteError(http.StatusBadRequest, "error with user or password, check data")
 		return
 	}
 
 	auth0Token, err := h.authProvider.Login(loginDTO.Email, loginDTO.Password)
 
 	if err != nil {
-		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "invalid credentials"})
+		writer.WriteError(http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
