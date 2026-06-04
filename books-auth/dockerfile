@@ -9,10 +9,13 @@ ENV CGO_ENABLED=1
 ENV GOOS=linux
 ENV GOARCH=amd64
 
-COPY go.mod go.sum ./
+COPY ../books-auth/go.mod ../books-auth/go.sum ./
+COPY ../shared /shared/
+
 RUN go mod download
 
-COPY . .
+COPY ../books-auth .
+
 RUN go build -o booktastic_auth .
 
 FROM alpine:3.23
