@@ -3,18 +3,15 @@ package ginhttp
 import "github.com/gin-gonic/gin"
 
 type GinErrors struct {
-	ctx *gin.Context
 }
 
-func NewGinErrors(ctx *gin.Context) *GinErrors {
-	return &GinErrors{
-		ctx: ctx,
-	}
+func NewGinErrors() *GinErrors {
+	return &GinErrors{}
 
 }
 
-func (g *GinErrors) WriteError(code int, message string) {
-	g.ctx.AbortWithStatusJSON(
+func (g *GinErrors) WriteError(context *gin.Context, code int, message string) {
+	context.AbortWithStatusJSON(
 		code,
 		gin.H{
 			"message": message,
