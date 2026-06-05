@@ -10,34 +10,35 @@ import (
 	"github.com/edmartt/booktastic-auth-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 
-	selfErrors "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
+	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 )
 
 type HTTPHandler struct {
 	jwtValidator ports.TokenValidator
 	authProvider ports.AuthProvider
+	errorWriter  errorHandling.GinErrors
 }
 
-func NewHandler(jwtValidator ports.TokenValidator, authProvider ports.AuthProvider) *HTTPHandler {
+func NewHandler(jwtValidator ports.TokenValidator, authProvider ports.AuthProvider, errorWriter errorHandling.GinErrors) *HTTPHandler {
 	return &HTTPHandler{
 		jwtValidator: jwtValidator,
 		authProvider: authProvider,
+		errorWriter:  errorWriter,
 	}
 }
 
 func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 	authHeader := context.GetHeader("Authorization")
-	writer := selfErrors.NewGinErrors(context)
 
 	if authHeader == "" {
-		writer.WriteError(401, "Missing Authorization Header")
+		h.errorWriter.WriteError(context, http.StatusUnauthorized, "Missing Authorization Header")
 		return
 	}
 
 	const bearer = "Bearer"
 
 	if !strings.HasPrefix(authHeader, bearer) {
-		writer.WriteError(401, "Invalid authorization header")
+		h.errorWriter.WriteError(context, http.StatusUnauthorized, "Invalid authorization header")
 		return
 	}
 
@@ -47,7 +48,7 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 	if err != nil {
 		slog.Error("JWT validation failed", "error", err, "path", context.FullPath())
-		writer.WriteError(401, "failed to validate JWT")
+		h.errorWriter.WriteError(context, http.StatusUnauthorized, "failed to validate JWT")
 		return
 	}
 
@@ -59,20 +60,19 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 
 func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	var myDTO dto.SignUpDTO
-	writer := selfErrors.NewGinErrors(context)
 
 	if err := context.BindJSON(&myDTO); err != nil {
-		writer.WriteError(http.StatusBadRequest, "error binding body")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "error binding body")
 		return
 	}
 
 	if myDTO.PasswordConfirmation != myDTO.Password {
-		writer.WriteError(http.StatusBadRequest, "password confirmation error")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "password confirmation error")
 		return
 	}
 
 	if !myDTO.IsValidPassword() {
-		writer.WriteError(http.StatusBadRequest, "password must contain uppercase, lowercase, numbers and special characters")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "password must contain uppercase, lowercase, numbers and special characters")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	slog.Error("unkown error", "error", err, "path", context.FullPath())
 
 	if err != nil {
-		writer.WriteError(http.StatusConflict, "user already exists")
+		h.errorWriter.WriteError(context, http.StatusConflict, "user already exists")
 		return
 	}
 
@@ -91,20 +91,18 @@ func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 func (h *HTTPHandler) LoginUserHandler(context *gin.Context) {
 
 	var loginDTO dto.LoginDTO
-	writer := selfErrors.NewGinErrors(context)
 
 	if err := context.BindJSON(&loginDTO); err != nil {
-		writer.WriteError(http.StatusBadRequest, "error with user or password, check data")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "error with user or password, check data")
 		return
 	}
 
 	auth0Token, err := h.authProvider.Login(loginDTO.Email, loginDTO.Password)
 
 	if err != nil {
-		writer.WriteError(http.StatusUnauthorized, "invalid credentials")
+		h.errorWriter.WriteError(context, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 
 	context.JSON(http.StatusOK, gin.H{"access token ": auth0Token})
-
 }

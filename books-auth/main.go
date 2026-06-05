@@ -5,6 +5,7 @@ import (
 
 	"github.com/edmartt/booktastic-auth-service/internal/adapters/auth0"
 	"github.com/edmartt/booktastic-auth-service/internal/adapters/http"
+	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/joho/godotenv"
 )
 
@@ -32,7 +33,8 @@ func main() {
 		panic(err)
 	}
 
-	handler := http.NewHandler(validator, authProvider)
+	errorHandler := errorHandling.NewGinErrors()
+	handler := http.NewHandler(validator, authProvider, *errorHandler)
 
 	server := http.HTTPServer{
 		Handler: *handler,

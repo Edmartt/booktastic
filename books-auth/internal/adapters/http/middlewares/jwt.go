@@ -1,4 +1,4 @@
-package middlewares
+package http
 
 import (
 	"log/slog"
@@ -13,17 +13,17 @@ import (
 func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		writer := selfErrors.NewGinErrors(c)
+		writer := selfErrors.NewGinErrors()
 
 		if authHeader == "" {
-			writer.WriteError(http.StatusUnauthorized, "missing authorization header")
+			writer.WriteError(c, http.StatusUnauthorized, "missing authorization header")
 			return
 		}
 
 		const bearer = "Bearer "
 
 		if !strings.HasPrefix(authHeader, bearer) {
-			writer.WriteError(http.StatusUnauthorized, "Invalid authorization header")
+			writer.WriteError(c, http.StatusUnauthorized, "Invalid authorization header")
 			return
 		}
 
@@ -38,7 +38,7 @@ func AuthMiddleware(tokenValidator ports.TokenValidator) gin.HandlerFunc {
 				"path", c.FullPath(),
 			)
 
-			writer.WriteError(http.StatusUnauthorized, "failed to validate JWT")
+			writer.WriteError(c, http.StatusUnauthorized, "failed to validate JWT")
 			return
 		}
 
