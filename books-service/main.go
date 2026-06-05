@@ -6,6 +6,7 @@ import (
 	"github.com/edmartt/bookstatic-book-service/internal/application"
 	"github.com/edmartt/bookstatic-book-service/internal/books/data"
 	"github.com/edmartt/bookstatic-book-service/internal/database"
+	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/joho/godotenv"
 )
 
@@ -20,7 +21,8 @@ func main() {
 
 	database.PingDB(getConn)
 	db := data.NewRepository(dbConnectObject)
-	handlerObject := application.NewHandler(db)
+	errorHandler := errorHandling.NewGinErrors()
+	handlerObject := application.NewHandler(db, *errorHandler)
 	server := application.HTTPServer{
 		Handler: *handlerObject,
 	}

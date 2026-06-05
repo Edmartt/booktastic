@@ -6,35 +6,36 @@ import (
 	"github.com/edmartt/bookstatic-book-service/internal/books/data"
 	"github.com/edmartt/bookstatic-book-service/internal/books/dtos"
 	"github.com/edmartt/bookstatic-book-service/internal/books/models"
-	selfErrors "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
+	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type HTTPHandler struct {
 	bookRepository data.IDataAccessLayer
+	errorWriter    errorHandling.GinErrors
 }
 
-func NewHandler(bookRepo data.IDataAccessLayer) *HTTPHandler {
+func NewHandler(bookRepo data.IDataAccessLayer, errorWriter errorHandling.GinErrors) *HTTPHandler {
 	return &HTTPHandler{
 		bookRepository: bookRepo,
+		errorWriter:    errorWriter,
 	}
 }
 
 func (h HTTPHandler) ReadBook(context *gin.Context) {
 	id := context.Param("id")
 	userID := context.GetHeader("X-User-Id")
-	writer := selfErrors.NewGinErrors(context)
 
 	if id == "" {
-		writer.WriteError(http.StatusBadRequest, "book ID is empty")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "book ID is empty")
 		return
 	}
 
 	book, err := h.bookRepository.Read(id, userID)
 
 	if err != nil {
-		writer.WriteError(http.StatusNotFound, "book not found")
+		h.errorWriter.WriteError(context, http.StatusNotFound, "book not found")
 		return
 	}
 	response := dtos.BookResponseDTO{
@@ -53,17 +54,16 @@ func (h HTTPHandler) ReadBook(context *gin.Context) {
 
 func (h HTTPHandler) CreateBook(context *gin.Context) {
 	var createDTO dtos.CreateBookDTO
-	writer := selfErrors.NewGinErrors(context)
 
 	if err := context.BindJSON(&createDTO); err != nil {
-		writer.WriteError(http.StatusBadRequest, "invalid request body")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	userID := context.GetHeader("X-User-Id")
 
 	if userID == "" {
-		writer.WriteError(http.StatusInternalServerError, "internal server error")
+		h.errorWriter.WriteError(context, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 	dbResponse, err := h.bookRepository.Create(book)
 
 	if err != nil {
-		writer.WriteError(http.StatusInternalServerError, "error creating book")
+		h.errorWriter.WriteError(context, http.StatusInternalServerError, "error creating book")
 		return
 	}
 
@@ -94,24 +94,23 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 
 	id := context.Param("id")
 	userID := context.GetHeader("X-User-Id")
-	writer := selfErrors.NewGinErrors(context)
 
 	if id == "" {
-		writer.WriteError(http.StatusInternalServerError, "internal server error")
+		h.errorWriter.WriteError(context, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
 	dbResponse, err := h.bookRepository.Read(id, userID)
 
 	if err != nil {
-		writer.WriteError(http.StatusNotFound, "book not found")
+		h.errorWriter.WriteError(context, http.StatusNotFound, "book not found")
 		return
 	}
 
 	var dtoUpdate dtos.UpdateBookDTO
 
 	if err := context.ShouldBindJSON(&dtoUpdate); err != nil {
-		writer.WriteError(http.StatusBadRequest, "invalid request body")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -120,7 +119,7 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 	updateResult, err := h.bookRepository.Update(dbResponse)
 
 	if err != nil {
-		writer.WriteError(http.StatusInternalServerError, "internal server error")
+		h.errorWriter.WriteError(context, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
