@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/edmartt/bookstatic-book-service/internal/application"
-	"github.com/edmartt/bookstatic-book-service/internal/books/data"
-	"github.com/edmartt/bookstatic-book-service/internal/database"
+	"github.com/edmartt/bookstatic-book-service/internal/adapters/database"
+	"github.com/edmartt/bookstatic-book-service/internal/adapters/http"
+	"github.com/edmartt/bookstatic-book-service/internal/adapters/repository"
 	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/joho/godotenv"
 )
@@ -16,14 +16,19 @@ func main() {
 		_ = godotenv.Load(".env")
 	}
 
-	dbConnectObject := &database.Postgres{}
+	cfg, err := database.LoadPGConfig()
+
+	if err != nil {
+		panic(err)
+	}
+	dbConnectObject := database.NewPostgres(cfg)
 	getConn := dbConnectObject.GetConnection()
 
 	database.PingDB(getConn)
-	db := data.NewRepository(dbConnectObject)
+	db := repository.NewRepository(dbConnectObject)
 	errorHandler := errorHandling.NewGinErrors()
-	handlerObject := application.NewHandler(db, *errorHandler)
-	server := application.HTTPServer{
+	handlerObject := http.NewHandler(db, *errorHandler)
+	server := http.HTTPServer{
 		Handler: *handlerObject,
 	}
 

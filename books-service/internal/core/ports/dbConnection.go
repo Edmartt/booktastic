@@ -1,4 +1,4 @@
-package database
+package ports
 
 import "github.com/jmoiron/sqlx"
 

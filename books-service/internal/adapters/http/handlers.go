@@ -1,22 +1,22 @@
-package application
+package http
 
 import (
 	"net/http"
 
-	"github.com/edmartt/bookstatic-book-service/internal/books/data"
-	"github.com/edmartt/bookstatic-book-service/internal/books/dtos"
-	"github.com/edmartt/bookstatic-book-service/internal/books/models"
+	"github.com/edmartt/bookstatic-book-service/internal/adapters/http/dtos"
+	"github.com/edmartt/bookstatic-book-service/internal/core/domain/models"
+	"github.com/edmartt/bookstatic-book-service/internal/core/ports"
 	errorHandling "github.com/edmartt/booktastic-shared/errors/http/adapters/ginhttp"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type HTTPHandler struct {
-	bookRepository data.IDataAccessLayer
+	bookRepository ports.IDataAccessLayer
 	errorWriter    errorHandling.GinErrors
 }
 
-func NewHandler(bookRepo data.IDataAccessLayer, errorWriter errorHandling.GinErrors) *HTTPHandler {
+func NewHandler(bookRepo ports.IDataAccessLayer, errorWriter errorHandling.GinErrors) *HTTPHandler {
 	return &HTTPHandler{
 		bookRepository: bookRepo,
 		errorWriter:    errorWriter,

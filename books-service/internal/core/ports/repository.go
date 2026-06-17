@@ -1,6 +1,6 @@
-package data
+package ports
 
-import "github.com/edmartt/bookstatic-book-service/internal/books/models"
+import "github.com/edmartt/bookstatic-book-service/internal/core/domain/models"
 
 type IDataAccessLayer interface {
 	Create(book models.Books) (string, error)
