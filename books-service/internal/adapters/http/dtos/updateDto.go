@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/edmartt/bookstatic-book-service/internal/books/models"
+import "github.com/edmartt/bookstatic-book-service/internal/core/domain/models"
 
 type UpdateBookDTO struct {
 	ISBN        *string `json:"isbn"`

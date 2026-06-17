@@ -1,18 +1,18 @@
-package data
+package repository
 
 import (
 	"database/sql"
 	"log"
 
-	"github.com/edmartt/bookstatic-book-service/internal/books/models"
-	"github.com/edmartt/bookstatic-book-service/internal/database"
+	"github.com/edmartt/bookstatic-book-service/internal/core/domain/models"
+	"github.com/edmartt/bookstatic-book-service/internal/core/ports"
 )
 
 type BookDataAccess struct {
-	db database.IDBConnection
+	db ports.IDBConnection
 }
 
-func NewRepository(db database.IDBConnection) *BookDataAccess {
+func NewRepository(db ports.IDBConnection) *BookDataAccess {
 	return &BookDataAccess{
 		db: db,
 	}
