@@ -27,6 +27,13 @@ func NewHandler(jwtValidator ports.TokenValidator, authProvider ports.AuthProvid
 	}
 }
 
+// @Summary Verify JWT token
+// @Description Internal endpoint used by Traefik forwardAuth to validate JWT tokens
+// @Tags auth
+// @Security BearerAuth
+// @Success 200
+// @Failure 401 {object} ErrorResponse
+// @Router /auth/verify [get]
 func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 	authHeader := context.GetHeader("Authorization")
 
@@ -58,6 +65,16 @@ func (h HTTPHandler) VerifyJWTToken(context *gin.Context) {
 	context.Status(http.StatusOK)
 }
 
+// @Summary Register user
+// @Description Create a new user in Auth0
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body dto.SignUpDTO true "Signup data"
+// @Success 201 {object} UserCreatedResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Router /auth/signup [post]
 func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 	var myDTO dto.SignUpDTO
 
@@ -78,16 +95,26 @@ func (h HTTPHandler) SignupUserHandler(context *gin.Context) {
 
 	authProviderResponse, err := h.authProvider.SignUp(myDTO.Email, myDTO.Password)
 
-	slog.Error("unkown error", "error", err, "path", context.FullPath())
-
 	if err != nil {
+
+		slog.Error("unkown error", "error", err, "path", context.FullPath())
 		h.errorWriter.WriteError(context, http.StatusConflict, "user already exists")
 		return
 	}
 
-	context.JSON(http.StatusCreated, gin.H{"user created ID": *authProviderResponse})
+	context.JSON(http.StatusCreated, UserCreatedResponse{UserCreatedID: *authProviderResponse})
 }
 
+// @Summary Login user
+// @Description Authenticate user and return JWT access token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body dto.LoginDTO true "Login credentials"
+// @Success 200 {object} TokenResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /auth/login [post]
 func (h *HTTPHandler) LoginUserHandler(context *gin.Context) {
 
 	var loginDTO dto.LoginDTO
@@ -104,5 +131,5 @@ func (h *HTTPHandler) LoginUserHandler(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"access token ": auth0Token})
+	context.JSON(http.StatusOK, TokenResponse{AccessToken: *auth0Token})
 }
