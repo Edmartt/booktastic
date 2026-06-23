@@ -9,6 +9,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// @title Booktastic Auth API
+// @version 1.0
+// @description Authentication service for Booktastic
+// @host auth.localhost
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 
 	if _, err := os.Stat(".env"); err == nil {

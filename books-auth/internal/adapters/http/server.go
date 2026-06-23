@@ -3,7 +3,10 @@ package http
 import (
 	"log"
 
+	_ "github.com/edmartt/booktastic-auth-service/docs"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type HTTPServer struct {
@@ -11,6 +14,7 @@ type HTTPServer struct {
 }
 
 func (h HTTPServer) setAuthRoutes(router *gin.RouterGroup) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/auth/verify", h.Handler.VerifyJWTToken)
 	router.POST("/auth/signup", h.Handler.SignupUserHandler)
 	router.POST("/auth/login", h.Handler.LoginUserHandler)
