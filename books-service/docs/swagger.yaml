@@ -1,0 +1,181 @@
+basePath: /api/v1
+definitions:
+  dtos.BookResponseDTO:
+    properties:
+      author:
+        type: string
+      current_page:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      pages:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      year:
+        type: string
+    type: object
+  dtos.CreateBookDTO:
+    properties:
+      author:
+        type: string
+      current_page:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      pages:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      year:
+        type: string
+    type: object
+  dtos.UpdateBookDTO:
+    properties:
+      author:
+        type: string
+      current_page:
+        type: string
+      isbn:
+        type: string
+      pages:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      year:
+        type: string
+    type: object
+  http.BookCreatedResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  http.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Books management service for Booktastic
+  title: Booktastic Books API
+  version: "1.0"
+paths:
+  /books:
+    post:
+      consumes:
+      - application/json
+      description: Create a new book
+      parameters:
+      - description: Book data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateBookDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.BookCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create book
+      tags:
+      - books
+  /books/{id}:
+    get:
+      description: Get a book by its UUID
+      parameters:
+      - description: Book UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.BookResponseDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get book by ID
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      description: Update an existing book
+      parameters:
+      - description: Book UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Book update data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateBookDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.UpdateBookDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update book
+      tags:
+      - books
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

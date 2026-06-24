@@ -23,6 +23,16 @@ func NewHandler(bookRepo ports.IDataAccessLayer, errorWriter errorHandling.GinEr
 	}
 }
 
+// @Summary Get book by ID
+// @Description Get a book by its UUID
+// @Tags books
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Book UUID"
+// @Success 200 {object} dtos.BookResponseDTO
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Router /books/{id} [get]
 func (h HTTPHandler) ReadBook(context *gin.Context) {
 	id := context.Param("id")
 	userID := context.GetHeader("X-User-Id")
@@ -52,6 +62,17 @@ func (h HTTPHandler) ReadBook(context *gin.Context) {
 	context.JSON(http.StatusOK, response)
 }
 
+// @Summary Create book
+// @Description Create a new book
+// @Tags books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body dtos.CreateBookDTO true "Book data"
+// @Success 201 {object} BookCreatedResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /books [post]
 func (h HTTPHandler) CreateBook(context *gin.Context) {
 	var createDTO dtos.CreateBookDTO
 
@@ -86,10 +107,25 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, dbResponse)
+	context.JSON(http.StatusCreated, BookCreatedResponse{
+		ID: dbResponse,
+	})
 
 }
 
+// @Summary Update book
+// @Description Update an existing book
+// @Tags books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Book UUID"
+// @Param body body dtos.UpdateBookDTO true "Book update data"
+// @Success 200 {object} dtos.UpdateBookDTO
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /books/{id} [put]
 func (h HTTPHandler) UpdateBook(context *gin.Context) {
 
 	id := context.Param("id")
