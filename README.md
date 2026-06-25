@@ -63,3 +63,69 @@ curl -X POST http://books.localhost/api/v1/books \
   -H "Content-Type: application/json" \
   -d '{"isbn":"978-3-16-148410-0","title":"Clean Code","pages":"464","current_page":"0","author":"Robert C. Martin","year":"2008","status":"reading"}'
 ```
+
+## Books API
+
+### Create a book
+```bash
+curl -X POST http://books.localhost/api/v1/books \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"isbn":"978-3-16-148410-0","title":"Clean Code","pages":"464","current_page":"0","author":"Robert C. Martin","year":"2008","status":"reading"}'
+```
+
+Response:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+### Get a book
+```bash
+curl -X GET http://books.localhost/api/v1/books/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer <your_token>"
+```
+
+Response:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "isbn": "978-3-16-148410-0",
+  "title": "Clean Code",
+  "pages": "464",
+  "current_page": "0",
+  "author": "Robert C. Martin",
+  "year": "2008",
+  "status": "reading"
+}
+```
+
+### Book not found
+```json
+{
+  "message": "book not found"
+}
+```
+
+### Update a book
+```bash
+curl -X PUT http://books.localhost/api/v1/books/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"current_page":"100","status":"reading"}'
+```
+
+Response:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "isbn": "978-3-16-148410-0",
+  "title": "Clean Code",
+  "pages": "464",
+  "current_page": "100",
+  "author": "Robert C. Martin",
+  "year": "2008",
+  "status": "reading"
+}
+```
