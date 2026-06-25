@@ -23,6 +23,14 @@ The following diagram reflects the concrete tech stack used:
 - Docker Compose
 - An Auth0 account with a Regular Web Application configured
 
+### Installation
+```bash
+git clone https://github.com/Edmartt/booktastic.git
+```
+```bash
+cd booktastic
+```
+
 ### Setup
 Create a `.env` file based on `.env.example` and fill in your credentials.
 
