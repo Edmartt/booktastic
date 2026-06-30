@@ -175,7 +175,7 @@ The notification worker supports multiple channels — email, Telegram, and SMS 
 
 MongoDB is used to persist the notification history, logging the result of each notification sent. This provides visibility into what was delivered, when, and through which channel — useful for debugging and auditing without relying on Kafka's retention window alone.
 
-Development Notes
+### Development Notes
 
 This project is actively under development. The messaging and event-driven notifications layer represents one of its main challenges — not only because it involves integrating multiple third-party services, but because it pushes into territory that is still being explored.
 
