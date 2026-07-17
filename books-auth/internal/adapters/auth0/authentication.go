@@ -10,11 +10,8 @@ import (
 )
 
 type Auth0InitAPI struct {
-	domain              string
-	clientID            string
-	clientSecret        string
-	auth0Connection     string
-	authAPI             *authentication.Authentication
+	authDatabase        Auth0DatabaseAPI
+	authOAuth           Auth0AuthAPI
 	auth0ConnectionType string
 	audience            string
 }
@@ -28,11 +25,8 @@ func NewAuth0InitAPI(domain, clientID, clientSecret, auth0Connection, audience s
 	}
 
 	return &Auth0InitAPI{
-		domain:              domain,
-		clientID:            clientID,
-		clientSecret:        clientSecret,
-		auth0Connection:     auth0Connection,
-		authAPI:             authAPi,
+		authDatabase:        authAPi.Database,
+		authOAuth:           authAPi.OAuth,
 		auth0ConnectionType: auth0Connection,
 		audience:            audience,
 	}, nil
@@ -45,7 +39,7 @@ func (a *Auth0InitAPI) SignUp(email, password string) (*string, error) {
 		Connection: a.auth0ConnectionType,
 	}
 
-	createdUser, err := a.authAPI.Database.Signup(context.Background(), userData)
+	createdUser, err := a.authDatabase.Signup(context.Background(), userData)
 
 	if err != nil {
 		return nil, fmt.Errorf("error requesting user creation: %v", err)
@@ -54,7 +48,7 @@ func (a *Auth0InitAPI) SignUp(email, password string) (*string, error) {
 }
 
 func (a *Auth0InitAPI) Login(email, password string) (*string, error) {
-	tokenSet, err := a.authAPI.OAuth.LoginWithPassword(context.Background(), oauth.LoginWithPasswordRequest{
+	tokenSet, err := a.authOAuth.LoginWithPassword(context.Background(), oauth.LoginWithPasswordRequest{
 		Username: email,
 		Password: password,
 		Audience: a.audience,
