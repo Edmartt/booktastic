@@ -31,16 +31,16 @@ func LoadPGConfig() (*PGConfig, error) {
 		return nil, fmt.Errorf("PG_PASSWORD environment variable required")
 	}
 
-	host := os.Getenv("HOST")
+	host := os.Getenv("PG_HOST")
 
 	if host == "" {
-		return nil, fmt.Errorf("HOST environment variable required")
+		return nil, fmt.Errorf("PG_HOST environment variable required")
 	}
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("PG_PORT")
 
 	if port == "" {
-		return nil, fmt.Errorf("PORT environment variable required")
+		return nil, fmt.Errorf("PG_PORT environment variable required")
 	}
 
 	return &PGConfig{
