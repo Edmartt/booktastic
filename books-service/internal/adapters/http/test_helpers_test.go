@@ -76,6 +76,10 @@ func marshalPayload(t *testing.T, fields map[string]any) string {
 	return string(body)
 }
 
+func stringPtr(value string) *string {
+	return &value
+}
+
 func responseKeys(t *testing.T, recorder *httptest.ResponseRecorder) []string {
 	t.Helper()
 

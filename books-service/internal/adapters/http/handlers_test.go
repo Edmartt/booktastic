@@ -1,6 +1,7 @@
 package http
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	nethttp "net/http"
@@ -502,4 +503,382 @@ func TestCreateBookResponseOnlyContainsID(t *testing.T) {
 	require.Equal(t, nethttp.StatusCreated, recorder.Code)
 
 	assert.ElementsMatch(t, []string{"id"}, responseKeys(t, recorder))
+}
+
+// UpdateBook helpers
+
+func newUpdateTestRouter(repository ports.IDataAccessLayer) *gin.Engine {
+	handler := newTestHandler(repository)
+
+	router := gin.New()
+	router.PATCH("/api/v1/books/:id", handler.UpdateBook)
+
+	return router
+}
+
+func performUpdateRequest(router *gin.Engine, bookID, body, userID string) *httptest.ResponseRecorder {
+	request := httptest.NewRequest(nethttp.MethodPatch, "/api/v1/books/"+bookID, strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+
+	if userID != "" {
+		request.Header.Set("X-User-Id", userID)
+	}
+
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	return recorder
+}
+
+func validUpdateFields() map[string]any {
+	return map[string]any{
+		"isbn":         "978-0-13-419044-0",
+		"title":        "The Go Programming Language, 2nd edition",
+		"pages":        "400",
+		"current_page": "200",
+		"author":       "Donovan and Kernighan",
+		"year":         "2016",
+		"status":       "2",
+	}
+}
+
+func validUpdatePayload(t *testing.T) string {
+	t.Helper()
+
+	return marshalPayload(t, validUpdateFields())
+}
+
+// UpdateBook tests
+
+func TestUpdateBookSuccess(t *testing.T) {
+	var received models.Books
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			received = *book
+
+			return book, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), sampleBook().UserID)
+
+	require.Equal(t, nethttp.StatusOK, recorder.Code)
+	assert.Contains(t, recorder.Header().Get("Content-Type"), "application/json")
+	assert.Equal(t, "The Go Programming Language, 2nd edition", received.Title)
+
+	var response dtos.UpdateBookDTO
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+
+	assert.Equal(t, dtos.UpdateBookDTO{
+		ID:          stringPtr(sampleBook().UUID),
+		ISBN:        stringPtr("978-0-13-419044-0"),
+		Title:       stringPtr("The Go Programming Language, 2nd edition"),
+		Pages:       stringPtr("400"),
+		CurrentPage: stringPtr("200"),
+		Author:      stringPtr("Donovan and Kernighan"),
+		Year:        stringPtr("2016"),
+		Status:      stringPtr("2"),
+	}, response)
+}
+
+func TestUpdateBookAppliesPartialUpdate(t *testing.T) {
+	testCases := []struct {
+		name     string
+		payload  map[string]any
+		expected func(book *models.Books)
+	}{
+		{
+			name:     "isbn",
+			payload:  map[string]any{"isbn": "978-0-13-419044-0"},
+			expected: func(book *models.Books) { book.ISBN = "978-0-13-419044-0" },
+		},
+		{
+			name:     "title",
+			payload:  map[string]any{"title": "Updated title"},
+			expected: func(book *models.Books) { book.Title = "Updated title" },
+		},
+		{
+			name:     "pages",
+			payload:  map[string]any{"pages": "500"},
+			expected: func(book *models.Books) { book.Pages = "500" },
+		},
+		{
+			name:     "current_page",
+			payload:  map[string]any{"current_page": "300"},
+			expected: func(book *models.Books) { book.CurrentPage = "300" },
+		},
+		{
+			name:     "author",
+			payload:  map[string]any{"author": "Updated author"},
+			expected: func(book *models.Books) { book.Author = "Updated author" },
+		},
+		{
+			name:     "year",
+			payload:  map[string]any{"year": "2020"},
+			expected: func(book *models.Books) { book.Year = "2020" },
+		},
+		{
+			name:     "status",
+			payload:  map[string]any{"status": "3"},
+			expected: func(book *models.Books) { book.Status = "3" },
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var received models.Books
+			repository := fakeBookRepository{
+				readFn: func(id, userID string) (*models.Books, error) {
+					return sampleBook(), nil
+				},
+				updateFn: func(book *models.Books) (*models.Books, error) {
+					received = *book
+
+					return book, nil
+				},
+			}
+
+			expected := sampleBook()
+			testCase.expected(expected)
+
+			router := newUpdateTestRouter(repository)
+			recorder := performUpdateRequest(router, sampleBook().UUID, marshalPayload(t, testCase.payload), sampleBook().UserID)
+
+			require.Equal(t, nethttp.StatusOK, recorder.Code)
+			assert.Equal(t, *expected, received)
+		})
+	}
+}
+
+func TestUpdateBookNullFieldIsIgnored(t *testing.T) {
+	var received models.Books
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			received = *book
+
+			return book, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, `{"title": null}`, sampleBook().UserID)
+
+	require.Equal(t, nethttp.StatusOK, recorder.Code)
+	assert.Equal(t, *sampleBook(), received)
+}
+
+func TestUpdateBookEmptyObject(t *testing.T) {
+	var received models.Books
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			received = *book
+
+			return book, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, `{}`, sampleBook().UserID)
+
+	require.Equal(t, nethttp.StatusOK, recorder.Code)
+	assert.Equal(t, *sampleBook(), received)
+}
+
+func TestUpdateBookPassesIDAndUserHeader(t *testing.T) {
+	var receivedID string
+	var receivedUserID string
+
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			receivedID = id
+			receivedUserID = userID
+
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			return book, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, "book-uuid-42", validUpdatePayload(t), "user-456")
+
+	require.Equal(t, nethttp.StatusOK, recorder.Code)
+	assert.Equal(t, "book-uuid-42", receivedID)
+	assert.Equal(t, "user-456", receivedUserID)
+}
+
+func TestUpdateBookDoesNotExposeUserID(t *testing.T) {
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			return book, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), sampleBook().UserID)
+
+	require.Equal(t, nethttp.StatusOK, recorder.Code)
+
+	assert.ElementsMatch(t, []string{
+		"id",
+		"isbn",
+		"title",
+		"pages",
+		"current_page",
+		"author",
+		"year",
+		"status",
+	}, responseKeys(t, recorder))
+}
+
+func TestUpdateBookReadError(t *testing.T) {
+	// updateFn is intentionally left unset: the fake panics if Update is reached.
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return nil, errors.New("record not found")
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, "missing-book", validUpdatePayload(t), "user-123")
+
+	require.Equal(t, nethttp.StatusNotFound, recorder.Code)
+	assert.Equal(t, "book not found", errorMessage(t, recorder))
+}
+
+func TestUpdateBookNilBookFromRead(t *testing.T) {
+	// Read is documented to return an error when the book is missing, but a
+	// repository returning (nil, nil) must not panic the handler.
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return nil, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), "user-123")
+
+	require.Equal(t, nethttp.StatusNotFound, recorder.Code)
+	assert.Equal(t, "book not found", errorMessage(t, recorder))
+}
+
+func TestUpdateBookEmptyID(t *testing.T) {
+	repositoryReadCalled := false
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			repositoryReadCalled = true
+
+			return nil, errors.New("should not be called")
+		},
+	}
+
+	handler := newTestHandler(repository)
+
+	recorder := httptest.NewRecorder()
+	context, _ := gin.CreateTestContext(recorder)
+	context.Request = httptest.NewRequest(nethttp.MethodPatch, "/api/v1/books/", nil)
+
+	handler.UpdateBook(context)
+
+	require.Equal(t, nethttp.StatusBadRequest, recorder.Code)
+	assert.False(t, repositoryReadCalled)
+	assert.Equal(t, "id required", errorMessage(t, recorder))
+}
+
+func TestUpdateBookInvalidJSON(t *testing.T) {
+	// The read happens before the bind, so readFn must be configured for the
+	// handler to reach body validation. updateFn is left unset on purpose.
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, `{"title":`, "user-123")
+
+	require.Equal(t, nethttp.StatusBadRequest, recorder.Code)
+	assert.Equal(t, "invalid request body", errorMessage(t, recorder))
+}
+
+func TestUpdateBookEmptyBody(t *testing.T) {
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, "", "user-123")
+
+	require.Equal(t, nethttp.StatusBadRequest, recorder.Code)
+	assert.Equal(t, "invalid request body", errorMessage(t, recorder))
+}
+
+func TestUpdateBookRepositoryError(t *testing.T) {
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			return nil, errors.New("update failed")
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), "user-123")
+
+	require.Equal(t, nethttp.StatusInternalServerError, recorder.Code)
+	assert.Equal(t, "internal server error", errorMessage(t, recorder))
+}
+
+func TestUpdateBookNoRows(t *testing.T) {
+	// documents current behaviour: a row deleted between Read and Update makes
+	// the repository return sql.ErrNoRows, which the handler maps to 500.
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			return nil, sql.ErrNoRows
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), "user-123")
+
+	require.Equal(t, nethttp.StatusInternalServerError, recorder.Code)
+	assert.Equal(t, "internal server error", errorMessage(t, recorder))
+}
+
+func TestUpdateBookNilResult(t *testing.T) {
+	// A repository returning (nil, nil) must not panic while building the response.
+	repository := fakeBookRepository{
+		readFn: func(id, userID string) (*models.Books, error) {
+			return sampleBook(), nil
+		},
+		updateFn: func(book *models.Books) (*models.Books, error) {
+			return nil, nil
+		},
+	}
+
+	router := newUpdateTestRouter(repository)
+	recorder := performUpdateRequest(router, sampleBook().UUID, validUpdatePayload(t), "user-123")
+
+	require.Equal(t, nethttp.StatusInternalServerError, recorder.Code)
+	assert.Equal(t, "internal server error", errorMessage(t, recorder))
 }
