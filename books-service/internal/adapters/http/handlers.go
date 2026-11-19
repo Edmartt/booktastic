@@ -132,7 +132,7 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 	userID := context.GetHeader("X-User-Id")
 
 	if id == "" {
-		h.errorWriter.WriteError(context, http.StatusInternalServerError, "internal server error")
+		h.errorWriter.WriteError(context, http.StatusBadRequest, "id required")
 		return
 	}
 
