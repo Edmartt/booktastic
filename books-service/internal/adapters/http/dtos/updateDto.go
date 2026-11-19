@@ -3,6 +3,7 @@ package dtos
 import "github.com/edmartt/bookstatic-book-service/internal/core/domain/models"
 
 type UpdateBookDTO struct {
+	ID          *string `json:"id"`
 	ISBN        *string `json:"isbn"`
 	Title       *string `json:"title"`
 	Pages       *string `json:"pages"`
@@ -10,6 +11,19 @@ type UpdateBookDTO struct {
 	Author      *string `json:"author"`
 	Year        *string `json:"year"`
 	Status      *string `json:"status"`
+}
+
+func NewUpdateBookDTOFrom(b *models.Books) UpdateBookDTO {
+	return UpdateBookDTO{
+		ID:          &b.UUID,
+		ISBN:        &b.ISBN,
+		Title:       &b.Title,
+		Pages:       &b.Pages,
+		CurrentPage: &b.CurrentPage,
+		Author:      &b.Author,
+		Year:        &b.Year,
+		Status:      &b.Status,
+	}
 }
 
 func (u UpdateBookDTO) ApplyTo(b *models.Books) {

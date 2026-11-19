@@ -125,7 +125,7 @@ func (h HTTPHandler) CreateBook(context *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /books/{id} [put]
+// @Router /books/{id} [patch]
 func (h HTTPHandler) UpdateBook(context *gin.Context) {
 
 	id := context.Param("id")
@@ -139,6 +139,11 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 	dbResponse, err := h.bookRepository.Read(id, userID)
 
 	if err != nil {
+		h.errorWriter.WriteError(context, http.StatusNotFound, "book not found")
+		return
+	}
+
+	if dbResponse == nil {
 		h.errorWriter.WriteError(context, http.StatusNotFound, "book not found")
 		return
 	}
@@ -159,5 +164,10 @@ func (h HTTPHandler) UpdateBook(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, updateResult)
+	if updateResult == nil {
+		h.errorWriter.WriteError(context, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	context.JSON(http.StatusOK, dtos.NewUpdateBookDTOFrom(updateResult))
 }

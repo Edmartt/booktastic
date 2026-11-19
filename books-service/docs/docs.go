@@ -111,7 +111,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -207,6 +207,15 @@ const docTemplate = `{
         },
         "dtos.CreateBookDTO": {
             "type": "object",
+            "required": [
+                "author",
+                "current_page",
+                "isbn",
+                "pages",
+                "status",
+                "title",
+                "year"
+            ],
             "properties": {
                 "author": {
                     "type": "string"
@@ -241,6 +250,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "current_page": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "string"
                 },
                 "isbn": {

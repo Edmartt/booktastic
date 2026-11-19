@@ -37,12 +37,22 @@ definitions:
         type: string
       year:
         type: string
+    required:
+    - author
+    - current_page
+    - isbn
+    - pages
+    - status
+    - title
+    - year
     type: object
   dtos.UpdateBookDTO:
     properties:
       author:
         type: string
       current_page:
+        type: string
+      id:
         type: string
       isbn:
         type: string
@@ -133,7 +143,7 @@ paths:
       summary: Get book by ID
       tags:
       - books
-    put:
+    patch:
       consumes:
       - application/json
       description: Update an existing book

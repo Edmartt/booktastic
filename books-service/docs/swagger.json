@@ -104,7 +104,7 @@
                     }
                 }
             },
-            "put": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -200,6 +200,15 @@
         },
         "dtos.CreateBookDTO": {
             "type": "object",
+            "required": [
+                "author",
+                "current_page",
+                "isbn",
+                "pages",
+                "status",
+                "title",
+                "year"
+            ],
             "properties": {
                 "author": {
                     "type": "string"
@@ -234,6 +243,9 @@
                     "type": "string"
                 },
                 "current_page": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "string"
                 },
                 "isbn": {
